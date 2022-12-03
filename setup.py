@@ -39,7 +39,7 @@ setup(
     long_description=README,
     keywords='javascript compiler babeljs jsx coffeescript typescript timeout',
     author='rmb122',
-    author_email='pypi@rmb122.cn',
+    author_email='pypi@rmb122.com',
     url=repo_url,
     project_urls={
         'CI: AppVeyor': 'https://ci.appveyor.com/project/{0}'.format(repo_slug),
