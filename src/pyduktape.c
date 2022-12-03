@@ -15,8 +15,13 @@ static PyObject *DukPyError;
 
 
 static PyObject *DukPy_create_context(PyObject *self, PyObject *_) {
-    duk_context *ctx = duk_create_heap(NULL, NULL, NULL, NULL, duktape_fatal_error_handler);
+    pyduktape_timeout_context *timeout_ctx = calloc(1, sizeof(pyduktape_timeout_context));
+    duk_context *ctx = duk_create_heap(NULL, NULL, NULL, timeout_ctx, duktape_fatal_error_handler);
+
+    pyduktape_save = PyEval_SaveThread();
     duk_module_duktape_init(ctx);
+    PyEval_RestoreThread(pyduktape_save);
+    timeout_ctx->module_init_done = 1;
 
     if (!ctx) {
         PyErr_SetString(DukPyError, "Unable to create dukpy interpreter context");
@@ -33,12 +38,13 @@ static PyObject *DukPy_eval_string(PyObject *self, PyObject *args) {
     duk_context *ctx;
     const char *command;
     const char *vars;
+    int timeout;
     int res;
     duk_int_t rc;
     const char *output;
     PyObject *result;
 
-    if (!PyArg_ParseTuple(args, CONDITIONAL_PY3("Oyy", "Oss"), &interpreter, &command, &vars))
+    if (!PyArg_ParseTuple(args, CONDITIONAL_PY3("Oyiy", "Osis"), &interpreter, &command, &timeout, &vars))
         return NULL;
 
     pyctx = PyObject_GetAttrString(interpreter, "_ctx");
@@ -76,7 +82,18 @@ static PyObject *DukPy_eval_string(PyObject *self, PyObject *args) {
     duk_push_c_function(ctx, require_set_module_id, 2);
     duk_put_global_string(ctx, "_require_set_module_id");
 
+    pyduktape_timeout_context *timeout_ctx = pyduktape_get_timeout(ctx);
+
+    if (timeout <= 0) {
+        timeout_ctx->stop_time = 0;
+    } else {
+        timeout_ctx->stop_time = time(NULL) + timeout;
+    }
+
+    pyduktape_save = PyEval_SaveThread();
     res = duk_peval_string(ctx, command);
+    PyEval_RestoreThread(pyduktape_save);
+
     if (res != 0) {
         duk_get_prop_string(ctx, -1, "stack");
         PyErr_SetString(DukPyError, duk_safe_to_string(ctx, -1));

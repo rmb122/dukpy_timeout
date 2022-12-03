@@ -36,7 +36,7 @@ class JSInterpreter(object):
     def loader(self):
         return self._loader
 
-    def evaljs(self, code, **kwargs):
+    def evaljs(self, code, timeout=0, **kwargs):
         """Runs JavaScript code in the context of the interpreter.
 
         All arguments will be converted to plain javascript objects
@@ -54,7 +54,7 @@ class JSInterpreter(object):
         if not isinstance(jsvars, bytes):
             jsvars = jsvars.encode('utf-8')
 
-        res = _dukpy.eval_string(self, jscode, jsvars)
+        res = _dukpy.eval_string(self, jscode, timeout, jsvars)
         if res is None:
             return None
 

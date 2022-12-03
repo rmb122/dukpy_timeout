@@ -23,21 +23,23 @@ duktape = Extension('dukpy._dukpy',
                              os.path.join('src', 'duktape', 'duk_v1_compat.c'),
                              os.path.join('src', 'duktape', 'duk_module_duktape.c'),
                              os.path.join('src','_support.c'),
-                             os.path.join('src','pyduktape.c')],
-                    include_dirs=[os.path.join('.', 'src', 'duktape')])
+                             os.path.join('src','pyduktape.c'),
+                             os.path.join('src','pyduktape_timeout.c')],
+                    include_dirs=[os.path.join('.', 'src', 'duktape'),
+                                  os.path.join('.', 'src')])
 
-name = 'dukpy'
-repo_slug = 'amol-/{0}'.format(name)
+name = 'dukpy_timeout'
+repo_slug = 'rmb122/{0}'.format(name)
 repo_url = 'https://github.com/{0}'.format(repo_slug)
 
 setup(
     name=name,
-    version='0.2.4',
-    description='Simple JavaScript interpreter for Python',
+    version='0.0.1',
+    description='Fork of dukpy, patched with timeout support',
     long_description=README,
-    keywords='javascript compiler babeljs jsx coffeescript typescript',
-    author='Alessandro Molina',
-    author_email='alessandro.molina@axant.it',
+    keywords='javascript compiler babeljs jsx coffeescript typescript timeout',
+    author='rmb122',
+    author_email='pypi@rmb122.cn',
     url=repo_url,
     project_urls={
         'CI: AppVeyor': 'https://ci.appveyor.com/project/{0}'.format(repo_slug),

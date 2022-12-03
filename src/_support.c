@@ -7,6 +7,7 @@
 
 static char const * const CONTEXT_CAPSULE_NAME = "DUKPY_CONTEXT_CAPSULE";
 
+__thread PyThreadState *pyduktape_save = NULL;
 
 duk_ret_t stack_json_encode(duk_context *ctx, void *ptr) {
     const char *output = duk_json_encode(ctx, -1);
@@ -32,7 +33,9 @@ duk_context *get_context_from_capsule(PyObject* pyctx) {
 
 
 void duktape_fatal_error_handler(void *ctx, const char *msg) {
+    PyEval_RestoreThread(pyduktape_save);
     PyErr_SetString(PyExc_RuntimeError, msg);
+    pyduktape_save = PyEval_SaveThread();
 }
 
 
@@ -41,6 +44,8 @@ void context_destroy(PyObject* pyctx) {
     if (!ctx)
         return;
 
+    // free timeout context
+    free(pyduktape_get_timeout(ctx));
     duk_destroy_heap(ctx);
 }
 
@@ -73,12 +78,15 @@ int call_py_function(duk_context *ctx) {
     duk_pop(ctx);
     duk_pop(ctx);
 
+    PyEval_RestoreThread(pyduktape_save);
     ret = PyObject_CallMethod(interpreter, "_check_exported_function_exists",
                               CONDITIONAL_PY3("y", "s"), pyfuncname);
 
     if (ret == Py_False) {
         duk_push_error_object(ctx, DUK_ERR_REFERENCE_ERROR,
                               "No Python Function named %s", pyfuncname);
+
+        pyduktape_save = PyEval_SaveThread();
         duk_throw(ctx);
     }
 
@@ -113,15 +121,19 @@ int call_py_function(duk_context *ctx) {
         Py_XDECREF(pvalue);
         Py_XDECREF(error);
 
+        pyduktape_save = PyEval_SaveThread();
         duk_throw(ctx);
     }
 
-    if (ret == Py_None)
+    if (ret == Py_None) {
+        pyduktape_save = PyEval_SaveThread();
         return 0;
+    }
 
     duk_push_string(ctx, PyBytes_AsString(ret));
     duk_json_decode(ctx, -1);
     Py_XDECREF(ret);
+    pyduktape_save = PyEval_SaveThread();
     return 1;
 }
 

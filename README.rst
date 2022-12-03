@@ -1,25 +1,44 @@
-dukpy
-=====
+dukpy_timeout
+=============
 
-.. image:: https://github.com/amol-/dukpy/actions/workflows/run-tests.yml/badge.svg
-    :target: https://travis-ci.org/amol-/dukpy
+.. image:: https://img.shields.io/pypi/v/dukpy_timeout.svg
+   :target: https://pypi.org/p/dukpy_timeout
 
-.. image:: https://coveralls.io/repos/amol-/dukpy/badge.png?branch=master
-    :target: https://coveralls.io/r/amol-/dukpy?branch=master
+dukpy_timeout is a fork of dukpy_, adding the timeout control for evaluating script.
 
-.. image:: https://img.shields.io/pypi/v/dukpy.svg
-   :target: https://pypi.org/p/dukpy
+.. _dukpy: https://github.com/amol-/dukpy
 
+Timeout support
+---------------------
 
-DukPy is a simple javascript interpreter for Python built on top of
-duktape engine **without any external dependency**.
-It comes with a bunch of common transpilers built-in for convenience:
+Add a new parameter for JSInterpreter's evaljs method, you can use it as follow:
 
-    - *CoffeeScript*
-    - *BabelJS*
-    - *TypeScript*
-    - *JSX*
-    - *LESS*
+.. code:: python
+
+    >>> import dukpy
+    >>> import traceback
+    >>> import time
+    >>>
+    >>> print(time.time())
+    1670057825.0522335
+    >>> i = dukpy.JSInterpreter()
+    >>> try:
+    ...     i.evaljs('while(1){}', timeout=3)
+    ... except Exception:
+    ...     traceback.print_exc()
+    ...     print(time.time())
+    ...
+    Traceback (most recent call last):
+    File "<stdin>", line 2, in <module>
+    File ".../venv/lib/python3.10/site-packages/dukpy-0.2.4-py3.10-linux-x86_64.egg/dukpy/evaljs.py", line 57, in evaljs
+        res = _dukpy.eval_string(self, jscode, timeout, jsvars)
+    _dukpy.JSRuntimeError: RangeError: execution timeout
+        at [anon] (duk_js_executor.c:2042) internal
+        at eval (eval:1) preventsyield
+    1670057829.0066872
+    >>>
+
+**NOTE**: The unit of time is second, and if timeout = 0, it means no time limit.
 
 CoffeeScript Compiler
 ---------------------

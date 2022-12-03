@@ -1,6 +1,9 @@
 #ifndef __DUKPY_SUPPORT_H__
 #define __DUKPY_SUPPORT_H__
 
+#include "pyduktape_timeout.h"
+
+extern __thread PyThreadState *pyduktape_save;
 
 duk_ret_t stack_json_encode(duk_context *ctx, void *ptr);
 void duktape_fatal_error_handler(void *ctx, const char *msg);
